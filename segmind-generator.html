@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segmind Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --surface3: #22222f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f8;
+    --muted: #7070a0;
+    --accent: #7c6fff;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,111,255,0.15);
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+  }
+
+  .api-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .api-row input {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    width: 240px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-row input:focus { border-color: var(--accent); }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 65px);
+  }
+
+  .panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .tab {
+    padding: 1rem;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: color 0.2s, background 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom: 2px solid var(--accent); background: var(--accent-glow); }
+
+  .panel-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; flex: 1; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea {
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+
+  textarea:focus, select:focus { border-color: var(--accent); }
+
+  select {
+    padding: 9px 12px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237070a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .slider-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent2);
+    min-width: 32px;
+    text-align: right;
+  }
+
+  .generate-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .generate-btn:hover { opacity: 0.9; }
+  .generate-btn:active { transform: scale(0.98); }
+  .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .canvas {
+    background: var(--bg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow-y: auto;
+    gap: 1.5rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    max-width: 300px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .empty-state h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    max-width: 720px;
+    width: 100%;
+    animation: fadeUp 0.4s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card img, .result-card video {
+    width: 100%;
+    display: block;
+  }
+
+  .result-meta {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+
+  .result-meta span {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .download-btn {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .download-btn:hover { background: var(--surface2); }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  .credits-note {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  #video-tab-content .row2 { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Segmind Studio
+  </div>
+  <div class="api-row">
+    <div class="status-dot" id="statusDot"></div>
+    <input type="password" id="apiKey" placeholder="SG_xxxxxxxxxxxx" oninput="checkKey(this.value)" />
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('image')">🖼 Image</button>
+      <button class="tab" onclick="switchTab('video')">🎬 Video</button>
+    </div>
+
+    <div class="panel-body" id="image-tab-content">
+      <div>
+        <label>Prompt</label>
+        <textarea id="img-prompt" placeholder="A lone astronaut standing on a red desert planet at dusk, cinematic lighting, ultra detailed…" rows="4"></textarea>
+      </div>
+      <div>
+        <label>Negative Prompt</label>
+        <textarea id="img-neg" placeholder="blurry, low quality, distorted, ugly" rows="2"></textarea>
+      </div>
+      <div>
+        <label>Model</label>
+        <select id="img-model">
+          <option value="sdxl1.0-txt2img">Stable Diffusion XL 1.0</option>
+          <option value="flux-schnell">Flux Schnell (fast)</option>
+          <option value="flux-dev">Flux Dev (quality)</option>
+          <option value="sd3">Stable Diffusion 3</option>
+          <option value="realistic-vision-v6">Realistic Vision v6</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Width</label>
+          <select id="img-w">
+            <option value="512">512</option>
+            <option value="768">768</option>
+            <option value="1024" selected>1024</option>
+          </select>
+        </div>
+        <div>
+          <label>Height</label>
+          <select id="img-h">
+            <option value="512">512</option>
+            <option value="768">768</option>
+            <option value="1024" selected>1024</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Steps — <span id="steps-val">30</span></label>
+        <div class="slider-row">
+          <input type="range" min="10" max="50" value="30" id="img-steps" oninput="document.getElementById('steps-val').textContent=this.value">
+        </div>
+      </div>
+      <div>
+        <label>Guidance Scale — <span id="cfg-val">7.5</span></label>
+        <div class="slider-row">
+          <input type="range" min="1" max="20" step="0.5" value="7.5" id="img-cfg" oninput="document.getElementById('cfg-val').textContent=this.value">
+        </div>
+      </div>
+      <button class="generate-btn" id="img-btn" onclick="generateImage()">
+        <span class="spinner" id="img-spin"></span>
+        Generate Image
+      </button>
+    </div>
+
+    <div class="panel-body" id="video-tab-content" style="display:none">
+      <div>
+        <label>Prompt</label>
+        <textarea id="vid-prompt" placeholder="A serene forest with morning mist, sunlight streaming through trees, birds in flight, cinematic…" rows="4"></textarea>
+      </div>
+      <div>
+        <label>Model</label>
+        <select id="vid-model">
+          <option value="cogvideox-5b">CogVideoX-5B</option>
+          <option value="wan-i2v">Wan 2.1 (image-to-video)</option>
+          <option value="ltx-video">LTX Video</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Duration</label>
+          <select id="vid-dur">
+            <option value="2">2 seconds</option>
+            <option value="4" selected>4 seconds</option>
+            <option value="6">6 seconds</option>
+          </select>
+        </div>
+        <div>
+          <label>FPS</label>
+          <select id="vid-fps">
+            <option value="8">8 fps</option>
+            <option value="16" selected>16 fps</option>
+            <option value="24">24 fps</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Guidance Scale — <span id="vid-cfg-val">7</span></label>
+        <div class="slider-row">
+          <input type="range" min="1" max="15" step="0.5" value="7" id="vid-cfg" oninput="document.getElementById('vid-cfg-val').textContent=this.value">
+        </div>
+      </div>
+      <p class="hint">⚡ Video generation takes 30–90s. Please be patient.</p>
+      <button class="generate-btn" id="vid-btn" onclick="generateVideo()">
+        <span class="spinner" id="vid-spin"></span>
+        Generate Video
+      </button>
+    </div>
+
+    <div class="credits-note">Daily free credits reset every 24 hours · segmind.com</div>
+  </div>
+
+  <div class="canvas" id="canvas">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">✦</div>
+      <h3>Nothing here yet</h3>
+      <p>Enter your API key and a prompt to start generating images and videos.</p>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentTab = 'image';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'image') || (i === 1 && tab === 'video')));
+  document.getElementById('image-tab-content').style.display = tab === 'image' ? 'flex' : 'none';
+  document.getElementById('video-tab-content').style.display = tab === 'video' ? 'flex' : 'none';
+}
+
+function checkKey(val) {
+  document.getElementById('statusDot').classList.toggle('ok', val.startsWith('SG_') && val.length > 10);
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function getKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (!k) { showToast('Please enter your Segmind API key', true); return null; }
+  return k;
+}
+
+function setLoading(btnId, spinId, loading) {
+  const btn = document.getElementById(btnId);
+  const spin = document.getElementById(spinId);
+  btn.disabled = loading;
+  spin.style.display = loading ? 'block' : 'none';
+  btn.childNodes[btn.childNodes.length - 1].textContent = loading
+    ? (btnId === 'img-btn' ? ' Generating…' : ' Generating…')
+    : (btnId === 'img-btn' ? ' Generate Image' : ' Generate Video');
+}
+
+function addResult(type, dataOrUrl, prompt, model, elapsed) {
+  const canvas = document.getElementById('canvas');
+  document.getElementById('emptyState').style.display = 'none';
+
+  const card = document.createElement('div');
+  card.className = 'result-card';
+
+  let mediaEl;
+  if (type === 'image') {
+    mediaEl = document.createElement('img');
+    mediaEl.src = typeof dataOrUrl === 'string' && dataOrUrl.startsWith('http') ? dataOrUrl : 'data:image/png;base64,' + dataOrUrl;
+    mediaEl.alt = prompt;
+  } else {
+    mediaEl = document.createElement('video');
+    mediaEl.src = typeof dataOrUrl === 'string' && dataOrUrl.startsWith('http') ? dataOrUrl : 'data:video/mp4;base64,' + dataOrUrl;
+    mediaEl.controls = true;
+    mediaEl.autoplay = true;
+    mediaEl.loop = true;
+    mediaEl.muted = true;
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'result-meta';
+  meta.innerHTML = `<span>${model} · ${elapsed}s</span>`;
+
+  const dl = document.createElement('a');
+  dl.className = 'download-btn';
+  dl.innerHTML = '↓ Download';
+  dl.href = mediaEl.src;
+  dl.download = `segmind-${type}-${Date.now()}.${type === 'image' ? 'png' : 'mp4'}`;
+  meta.appendChild(dl);
+
+  card.appendChild(mediaEl);
+  card.appendChild(meta);
+  canvas.insertBefore(card, canvas.firstChild);
+}
+
+async function generateImage() {
+  const key = getKey();
+  if (!key) return;
+  const prompt = document.getElementById('img-prompt').value.trim();
+  if (!prompt) { showToast('Please enter a prompt', true); return; }
+
+  const model = document.getElementById('img-model').value;
+  const w = parseInt(document.getElementById('img-w').value);
+  const h = parseInt(document.getElementById('img-h').value);
+  const steps = parseInt(document.getElementById('img-steps').value);
+  const cfg = parseFloat(document.getElementById('img-cfg').value);
+  const neg = document.getElementById('img-neg').value.trim();
+
+  setLoading('img-btn', 'img-spin', true);
+  const t0 = Date.now();
+
+  const url = `https://api.segmind.com/v1/${model}`;
+  const body = { prompt, negative_prompt: neg, width: w, height: h, num_inference_steps: steps, guidance_scale: cfg, samples: 1, seed: Math.floor(Math.random() * 99999999) };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-api-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || err.error || `HTTP ${res.status}`);
+    }
+
+    const ct = res.headers.get('content-type') || '';
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+
+    if (ct.includes('application/json')) {
+      const data = await res.json();
+      const imgData = data.image || data.images?.[0] || data.output;
+      if (!imgData) throw new Error('No image in response');
+      addResult('image', imgData, prompt, model, elapsed);
+    } else {
+      const blob = await res.blob();
+      const url2 = URL.createObjectURL(blob);
+      addResult('image', url2, prompt, model, elapsed);
+    }
+
+    showToast(`Image generated in ${elapsed}s`);
+  } catch (e) {
+    showToast(e.message || 'Generation failed', true);
+  } finally {
+    setLoading('img-btn', 'img-spin', false);
+  }
+}
+
+async function generateVideo() {
+  const key = getKey();
+  if (!key) return;
+  const prompt = document.getElementById('vid-prompt').value.trim();
+  if (!prompt) { showToast('Please enter a prompt', true); return; }
+
+  const model = document.getElementById('vid-model').value;
+  const dur = parseInt(document.getElementById('vid-dur').value);
+  const fps = parseInt(document.getElementById('vid-fps').value);
+  const cfg = parseFloat(document.getElementById('vid-cfg').value);
+
+  setLoading('vid-btn', 'vid-spin', true);
+  const t0 = Date.now();
+
+  const url = `https://api.segmind.com/v1/${model}`;
+  const body = { prompt, num_frames: dur * fps, fps, guidance_scale: cfg, seed: Math.floor(Math.random() * 99999999) };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-api-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || err.error || `HTTP ${res.status}`);
+    }
+
+    const ct = res.headers.get('content-type') || '';
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+
+    if (ct.includes('application/json')) {
+      const data = await res.json();
+      const vidData = data.video || data.output;
+      if (!vidData) throw new Error('No video in response');
+      addResult('video', vidData, prompt, model, elapsed);
+    } else {
+      const blob = await res.blob();
+      const url2 = URL.createObjectURL(blob);
+      addResult('video', url2, prompt, model, elapsed);
+    }
+
+    showToast(`Video generated in ${elapsed}s`);
+  } catch (e) {
+    showToast(e.message || 'Generation failed', true);
+  } finally {
+    setLoading('vid-btn', 'vid-spin', false);
+  }
+}
+</script>
+</body>
+</html>
